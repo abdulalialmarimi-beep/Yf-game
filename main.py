@@ -17,6 +17,7 @@ async def on_ready():
 
 async def load_cogs():
     await bot.load_extension("cogs.test_cog")
+    await bot.load_extension("cogs.hisab")
 
 
 async def main():
