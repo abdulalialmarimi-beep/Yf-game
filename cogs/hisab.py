@@ -1,12 +1,47 @@
 import asyncio
 import random
-
 import discord
 from discord.ext import commands
+from PIL import Image, ImageDraw, ImageFont
+import io
+import os
 
 from config import EMBED_COLOR
 
 active_games: dict[int, bool] = {}
+
+BG_PATH = "IMG_٠١٠٤٩_٢٠٢٦٠٦٢٠.png"  # اسم الصورة الخضراء في الريبو
+
+def make_image(text: str) -> discord.File:
+    """يولد صورة بالخلفية الخضراء والنص في الوسط"""
+    img = Image.open(BG_PATH).convert("RGBA")
+    draw = ImageDraw.Draw(img)
+    
+    W, H = img.size
+
+    # حاول تحمل خط عريض وكبير
+    try:
+        font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 80)
+    except:
+        font = ImageFont.load_default()
+
+    # احسب حجم النص عشان تحطه في الوسط
+    bbox = draw.textbbox((0, 0), text, font=font)
+    text_w = bbox[2] - bbox[0]
+    text_h = bbox[3] - bbox[1]
+
+    x = (W - text_w) / 2
+    y = (H - text_h) / 2
+
+    # ظل للنص عشان يكون واضح
+    draw.text((x+3, y+3), text, font=font, fill=(0, 0, 0, 200))
+    # النص الأبيض
+    draw.text((x, y), text, font=font, fill=(255, 255, 255, 255))
+
+    buf = io.BytesIO()
+    img.save(buf, format="PNG")
+    buf.seek(0)
+    return discord.File(buf, filename="game.png")
 
 
 class HisabCog(commands.Cog):
@@ -18,7 +53,7 @@ class HisabCog(commands.Cog):
         channel_id = ctx.channel.id
 
         if active_games.get(channel_id):
-            await ctx.send("⚠️ هناك لعبة قيد التشغيل بالفعل! انتظر حتى تنتهي.")
+            await ctx.send("⚠️ هناك لعبة قيد التشغيل! انتظر حتى تنتهي.")
             return
 
         active_games[channel_id] = True
@@ -28,13 +63,9 @@ class HisabCog(commands.Cog):
             num2 = random.randint(1, 99)
             correct_answer = num1 + num2
 
-            embed = discord.Embed(
-                title="حساب",
-                description=f"**{num1} + {num2}**",
-                color=EMBED_COLOR,
-            )
-            embed.set_footer(text="SOLOGAMES")
-            await ctx.send(embed=embed)
+            text = f"🧮 حساب\n{num1} + {num2} = ؟\n⏱️ عندك 10 ثواني"
+            file = make_image(text)
+            await ctx.send(file=file)
 
             def check(message: discord.Message) -> bool:
                 if message.channel.id != channel_id:
@@ -63,11 +94,11 @@ class HisabCog(commands.Cog):
 
             if winner:
                 await ctx.send(
-                    f"✅ إجابة صحيحة! {winner.mention} فاز بنقطة واحدة! (+1)"
+                    f"✅ إجابة صحيحة! {winner.mention} فاز بنقطة واحدة (+1)"
                 )
             else:
                 await ctx.send(
-                    f"⏰ انتهى الوقت! لم يفز أحد. الإجابة كانت: **{correct_answer}**"
+                    f"🔴 انتهى الوقت! لم يفز أحد. الإجابة كانت: **{correct_answer}**"
                 )
 
         finally:
@@ -76,3 +107,4 @@ class HisabCog(commands.Cog):
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(HisabCog(bot))
+    
