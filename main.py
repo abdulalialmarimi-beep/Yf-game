@@ -33,7 +33,7 @@ async def load_cogs():
     await bot.load_extension("cogs.kat")
     await bot.load_extension("cogs.as3ar")
     await bot.load_extension("cogs.rabt")
-    await bot.load_extension("cogs.3aks")
+    await bot.load_extension("cogs.aks")
     await bot.load_extension("cogs.fak")
 
 async def main():
