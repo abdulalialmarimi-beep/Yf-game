@@ -1,4 +1,6 @@
 discord.py
 pillow
 requests
+pymongo
+dnspython
 aiohttp
