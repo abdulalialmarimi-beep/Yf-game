@@ -10,7 +10,7 @@ from config import EMBED_COLOR
 
 active_games: dict[int, bool] = {}
 
-BG_PATH = "IMG_٠١٠٤٩_٢٠٢٦٠٦٢٠.png"  # اسم الصورة الخضراء في الريبو
+BG_PATH = "bg.png"  # اسم الصورة الخضراء في الريبو
 
 def make_image(text: str) -> discord.File:
     """يولد صورة بالخلفية الخضراء والنص في الوسط"""
