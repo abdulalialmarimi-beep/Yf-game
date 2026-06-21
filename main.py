@@ -30,6 +30,7 @@ async def load_cogs():
     await bot.load_extension("cogs.hisab")
     await bot.load_extension("cogs.jam3")
     await bot.load_extension("cogs.mufrad")
+    await bot.load_extension("cogs.kat")
 
 async def main():
     threading.Thread(target=run_server, daemon=True).start()
