@@ -157,7 +157,7 @@ class S7KhataCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(name="صح")
+    @commands.command(name="صواب")
     async def s7_5ata(self, ctx):
         channel_id = ctx.channel.id
         if active_games.get(channel_id):
