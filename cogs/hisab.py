@@ -4,39 +4,43 @@ import discord
 from discord.ext import commands
 from PIL import Image, ImageDraw, ImageFont
 import io
-import os
 
 from config import EMBED_COLOR
 
 active_games: dict[int, bool] = {}
 
-BG_PATH = "bg.png"  # اسم الصورة الخضراء في الريبو
+BG_PATH = "bg.png"
 
-def make_image(text: str) -> discord.File:
-    """يولد صورة بالخلفية الخضراء والنص في الوسط"""
+def make_image(title: str, question: str) -> discord.File:
     img = Image.open(BG_PATH).convert("RGBA")
     draw = ImageDraw.Draw(img)
-    
     W, H = img.size
 
-    # حاول تحمل خط عريض وكبير
     try:
-        font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 80)
+        font_title = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 90)
+        font_question = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 100)
     except:
-        font = ImageFont.load_default()
+        font_title = ImageFont.load_default()
+        font_question = font_title
 
-    # احسب حجم النص عشان تحطه في الوسط
-    bbox = draw.textbbox((0, 0), text, font=font)
-    text_w = bbox[2] - bbox[0]
-    text_h = bbox[3] - bbox[1]
+    GOLD = (255, 215, 0, 255)
+    SHADOW = (0, 0, 0, 200)
 
-    x = (W - text_w) / 2
-    y = (H - text_h) / 2
+    bbox = draw.textbbox((0, 0), title, font=font_title)
+    tw = bbox[2] - bbox[0]
+    tx = (W - tw) / 2
+    ty = H * 0.2
 
-    # ظل للنص عشان يكون واضح
-    draw.text((x+3, y+3), text, font=font, fill=(0, 0, 0, 200))
-    # النص الأبيض
-    draw.text((x, y), text, font=font, fill=(255, 255, 255, 255))
+    draw.text((tx+3, ty+3), title, font=font_title, fill=SHADOW)
+    draw.text((tx, ty), title, font=font_title, fill=GOLD)
+
+    bbox2 = draw.textbbox((0, 0), question, font=font_question)
+    qw = bbox2[2] - bbox2[0]
+    qx = (W - qw) / 2
+    qy = H * 0.5
+
+    draw.text((qx+3, qy+3), question, font=font_question, fill=SHADOW)
+    draw.text((qx, qy), question, font=font_question, fill=GOLD)
 
     buf = io.BytesIO()
     img.save(buf, format="PNG")
@@ -63,8 +67,7 @@ class HisabCog(commands.Cog):
             num2 = random.randint(1, 99)
             correct_answer = num1 + num2
 
-            text = f"🧮 حساب\n{num1} + {num2} = ؟\n⏱️ عندك 10 ثواني"
-            file = make_image(text)
+            file = make_image("حساب", f"{num1} + {num2} = ?")
             await ctx.send(file=file)
 
             def check(message: discord.Message) -> bool:
@@ -93,13 +96,9 @@ class HisabCog(commands.Cog):
                     break
 
             if winner:
-                await ctx.send(
-                    f"✅ إجابة صحيحة! {winner.mention} فاز بنقطة واحدة (+1)"
-                )
+                await ctx.send(f"✅ إجابة صحيحة! {winner.mention} فاز بنقطة واحدة (+1)")
             else:
-                await ctx.send(
-                    f"🔴 انتهى الوقت! لم يفز أحد. الإجابة كانت: **{correct_answer}**"
-                )
+                await ctx.send(f"🔴 انتهى الوقت! لم يفز أحد. الإجابة كانت: **{correct_answer}**")
 
         finally:
             active_games[channel_id] = False
@@ -107,4 +106,3 @@ class HisabCog(commands.Cog):
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(HisabCog(bot))
-    
