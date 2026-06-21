@@ -123,17 +123,6 @@ def make_image(question: str) -> discord.File:
 
     GOLD = (255, 215, 0, 255)
     SHADOW = (0, 0, 0, 200)
-
-    # عنوان
-    title = "كت"
-    bbox = draw.textbbox((0, 0), title, font=font_title)
-    tw = bbox[2] - bbox[0]
-    tx = (W - tw) / 2
-    ty = H * 0.1
-
-    draw.text((tx+3, ty+3), title, font=font_title, fill=SHADOW)
-    draw.text((tx, ty), title, font=font_title, fill=GOLD)
-
     # السؤال في الوسط مع تقطيع السطور
     lines = textwrap.wrap(question, width=25)
     total_h = sum([draw.textbbox((0,0), l, font=font_q)[3] - draw.textbbox((0,0), l, font=font_q)[1] + 10 for l in lines])
