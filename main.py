@@ -35,6 +35,7 @@ async def load_cogs():
     await bot.load_extension("cogs.rabt")
     await bot.load_extension("cogs.aks")
     await bot.load_extension("cogs.fak")
+    await bot.load_extension("cogs.s7_5ata")
 
 async def main():
     threading.Thread(target=run_server, daemon=True).start()
@@ -44,4 +45,3 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
-    
