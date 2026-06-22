@@ -51,3 +51,5 @@ async def transfer_points(from_id: int, to_id: int, amount: int) -> bool:
         return True
     except:
         return False
+async def setup(bot):
+    await bot.add_cog(NiqatCog(bot))
