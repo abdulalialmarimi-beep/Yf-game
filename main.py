@@ -1,9 +1,12 @@
 import asyncio
 import discord
+import subprocess
 from discord.ext import commands
 from config import TOKEN, PREFIX
 import threading
 from http.server import HTTPServer, BaseHTTPRequestHandler
+
+subprocess.run(["pip", "install", "motor"], check=True)
 
 class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
@@ -34,7 +37,9 @@ async def load_cogs():
     await bot.load_extension("cogs.aks")
     await bot.load_extension("cogs.fak")
     await bot.load_extension("cogs.s7_5ata")
+    await bot.load_extension("cogs.kat")
     await bot.load_extension("cogs.niqat")
+    await bot.load_extension("cogs.a3lam")
 
 async def main():
     threading.Thread(target=run_server, daemon=True).start()
