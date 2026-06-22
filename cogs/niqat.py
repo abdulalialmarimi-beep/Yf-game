@@ -63,18 +63,32 @@ class NiqatCog(commands.Cog):
         await ctx.send(file=discord.File(buf, filename="floos.png"))
 
     @commands.command(name="تحويل")
-    async def tahweel(self, ctx, member: discord.Member, amount: int):
+    async def tahweel(self, ctx, member: discord.Member = None, amount: int = None):
+        # لو ما ذكر شخص
+        if member is None:
+            await ctx.send("❌ لازم تذكر شخص! مثال: `!تحويل @شخص 10`")
+            return
+        # لو ما ذكر رقم
+        if amount is None:
+            await ctx.send("❌ لازم تذكر عدد النقاط! مثال: `!تحويل @شخص 10`")
+            return
+        # لو الرقم سالب أو صفر
         if amount <= 0:
             await ctx.send("❌ الرقم لازم يكون أكبر من 0!")
             return
+        # لو يحول لنفسه
         if member.id == ctx.author.id:
             await ctx.send("❌ ما تقدر تحول لنفسك!")
             return
+        
         success = await transfer_points(ctx.author.id, member.id, amount)
         if success:
             await ctx.send(f"✅ تم تحويل **{amount}** نقطة من {ctx.author.mention} إلى {member.mention}!")
         else:
-            await ctx.send(f"❌ ما عندك نقاط كافية!")
+            pts = await get_points(ctx.author.id)
+            total = pts["solo"] + pts["group"]
+            await ctx.send(f"❌ ما عندك نقاط كافية! عندك **{total}** نقطة فقط.")
 
 async def setup(bot):
     await bot.add_cog(NiqatCog(bot))
+    
