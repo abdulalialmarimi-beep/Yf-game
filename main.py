@@ -1,9 +1,12 @@
 import asyncio
 import discord
+import subprocess
 from discord.ext import commands
 from config import TOKEN, PREFIX
 import threading
 from http.server import HTTPServer, BaseHTTPRequestHandler
+
+subprocess.run(["pip", "install", "motor"], check=True)
 
 class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
