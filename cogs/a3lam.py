@@ -17,66 +17,53 @@ def get_bg():
         _BG_CACHE = Image.open(BG_PATH).convert("RGBA")
     return _BG_CACHE.copy()
 
-# (اسم الدولة, كود العلم)
 COUNTRIES = [
     ("السعودية", "sa"), ("مصر", "eg"), ("الإمارات", "ae"), ("الكويت", "kw"),
     ("قطر", "qa"), ("البحرين", "bh"), ("عُمان", "om"), ("اليمن", "ye"),
     ("العراق", "iq"), ("سوريا", "sy"), ("لبنان", "lb"), ("الأردن", "jo"),
     ("فلسطين", "ps"), ("ليبيا", "ly"), ("تونس", "tn"), ("الجزائر", "dz"),
-    ("المغرب", "ma"), ("السودان", "sd"), ("الصومال", "so"), ("موريتانيا", "mr"),
-    ("فرنسا", "fr"), ("ألمانيا", "de"), ("إيطاليا", "it"), ("إسبانيا", "es"),
-    ("البرتغال", "pt"), ("هولندا", "nl"), ("بلجيكا", "be"), ("سويسرا", "ch"),
-    ("النمسا", "at"), ("السويد", "se"), ("النرويج", "no"), ("الدنمارك", "dk"),
-    ("فنلندا", "fi"), ("بولندا", "pl"), ("اليونان", "gr"), ("تركيا", "tr"),
-    ("روسيا", "ru"), ("أوكرانيا", "ua"), ("إنجلترا", "gb"), ("أيرلندا", "ie"),
-    ("الولايات المتحدة", "us"), ("كندا", "ca"), ("المكسيك", "mx"), ("البرازيل", "br"),
-    ("الأرجنتين", "ar"), ("كولومبيا", "co"), ("بيرو", "pe"), ("تشيلي", "cl"),
-    ("الصين", "cn"), ("اليابان", "jp"), ("كوريا الجنوبية", "kr"), ("الهند", "in"),
-    ("باكستان", "pk"), ("إيران", "ir"), ("أفغانستان", "af"), ("إندونيسيا", "id"),
-    ("ماليزيا", "my"), ("تايلاند", "th"), ("فيتنام", "vn"), ("الفلبين", "ph"),
-    ("أستراليا", "au"), ("نيوزيلندا", "nz"), ("جنوب أفريقيا", "za"), ("نيجيريا", "ng"),
-    ("كينيا", "ke"), ("إثيوبيا", "et"), ("غانا", "gh"), ("الكاميرون", "cm"),
-    ("المملكة المتحدة", "gb"), ("إسرائيل", "il"), ("سنغافورة", "sg"), ("بنغلاديش", "bd"),
+    ("المغرب", "ma"), ("السودان", "sd"), ("فرنسا", "fr"), ("ألمانيا", "de"),
+    ("إيطاليا", "it"), ("إسبانيا", "es"), ("البرتغال", "pt"), ("هولندا", "nl"),
+    ("السويد", "se"), ("النرويج", "no"), ("الدنمارك", "dk"), ("تركيا", "tr"),
+    ("روسيا", "ru"), ("إنجلترا", "gb"), ("الولايات المتحدة", "us"), ("كندا", "ca"),
+    ("البرازيل", "br"), ("الأرجنتين", "ar"), ("الصين", "cn"), ("اليابان", "jp"),
+    ("كوريا الجنوبية", "kr"), ("الهند", "in"), ("باكستان", "pk"), ("إيران", "ir"),
+    ("إندونيسيا", "id"), ("ماليزيا", "my"), ("أستراليا", "au"), ("جنوب أفريقيا", "za"),
+    ("نيجيريا", "ng"), ("كينيا", "ke"), ("إثيوبيا", "et"), ("غانا", "gh"),
 ]
 
-async def make_image(country_name: str, flag_code: str) -> discord.File:
+async def make_image(flag_code: str) -> discord.File:
     img = get_bg()
     draw = ImageDraw.Draw(img)
     W, H = img.size
 
     try:
-        font_title = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 80)
+        font_title = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 60)
     except:
         font_title = ImageFont.load_default()
 
     GOLD = (255, 215, 0, 255)
     SHADOW = (0, 0, 0, 200)
 
-    # كتابة "أعلام" في أقصى اليمين
-    title = "أعلام"
+    title = "علم"
     bbox = draw.textbbox((0, 0), title, font=font_title)
     tw = bbox[2] - bbox[0]
-    tx = W - tw - 20
-    ty = 20
+    tx = (W - tw) / 2
+    ty = H * 0.05
     draw.text((tx+3, ty+3), title, font=font_title, fill=SHADOW)
     draw.text((tx, ty), title, font=font_title, fill=GOLD)
 
-    # تحميل العلم
     flag_url = f"https://flagcdn.com/w320/{flag_code}.png"
     async with aiohttp.ClientSession() as session:
         async with session.get(flag_url) as resp:
             flag_data = await resp.read()
 
     flag_img = Image.open(io.BytesIO(flag_data)).convert("RGBA")
-
-    # تكبير العلم
-    flag_w = int(W * 0.7)
+    flag_w = int(W * 0.55)
     flag_h = int(flag_w * flag_img.height / flag_img.width)
     flag_img = flag_img.resize((flag_w, flag_h))
-
-    # وضع العلم في وسط الصورة
     fx = (W - flag_w) // 2
-    fy = (H - flag_h) // 2
+    fy = (H - flag_h) // 2 + 20
     img.paste(flag_img, (fx, fy), flag_img)
 
     buf = io.BytesIO()
@@ -88,7 +75,7 @@ class A3lamCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(name="أعلام")
+    @commands.command(name="اعلام")
     async def a3lam(self, ctx):
         channel_id = ctx.channel.id
         if active_games.get(channel_id):
@@ -97,7 +84,7 @@ class A3lamCog(commands.Cog):
         active_games[channel_id] = True
         try:
             country_name, flag_code = random.choice(COUNTRIES)
-            file = await make_image(country_name, flag_code)
+            file = await make_image(flag_code)
             await ctx.send(file=file)
 
             def check(m):
@@ -126,3 +113,4 @@ class A3lamCog(commands.Cog):
 
 async def setup(bot):
     await bot.add_cog(A3lamCog(bot))
+    
