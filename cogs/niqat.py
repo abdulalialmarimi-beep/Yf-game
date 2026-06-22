@@ -7,6 +7,9 @@ from points import get_points, transfer_points
 
 PROFILE_BG = "profile.png"
 
+# كاش للصور الشخصية لتسريع الأمر
+_avatar_cache: dict[int, bytes] = {}
+
 class NiqatCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -19,9 +22,14 @@ class NiqatCog(commands.Cog):
         group = pts["group"]
         total = solo + group
 
-        async with aiohttp.ClientSession() as session:
-            async with session.get(str(member.display_avatar.url)) as resp:
-                avatar_data = await resp.read()
+        # استخدم الكاش إذا الصورة محفوظة
+        if member.id in _avatar_cache:
+            avatar_data = _avatar_cache[member.id]
+        else:
+            async with aiohttp.ClientSession() as session:
+                async with session.get(str(member.display_avatar.url)) as resp:
+                    avatar_data = await resp.read()
+            _avatar_cache[member.id] = avatar_data
 
         img = Image.open(PROFILE_BG).convert("RGBA")
         draw = ImageDraw.Draw(img)
