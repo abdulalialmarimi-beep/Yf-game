@@ -6,6 +6,8 @@ from config import TOKEN, PREFIX
 import threading
 from http.server import HTTPServer, BaseHTTPRequestHandler
 
+print("TEST 123")
+
 subprocess.run(["pip", "install", "motor"], check=True)
 
 class Handler(BaseHTTPRequestHandler):
