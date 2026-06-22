@@ -3,7 +3,6 @@ import motor.motor_asyncio
 
 MONGODB_URI = os.getenv("MONGODB_URI")
 
-# عميل واحد فقط طوال عمر البوت - لا تفتح عميل جديد بكل استدعاء
 _client = motor.motor_asyncio.AsyncIOMotorClient(MONGODB_URI, serverSelectionTimeoutMS=3000)
 _db = _client["yfgame"]
 _collection = _db["points"]
@@ -48,6 +47,13 @@ async def add_group_points(user_id: int, amount: int = 1):
 
 async def transfer_points(from_id: int, to_id: int, amount: int) -> bool:
     try:
+        # تأكد إن المستخدم عنده document أولاً
+        await _collection.update_one(
+            {"user_id": from_id},
+            {"$setOnInsert": {"solo": 0, "group": 0}},
+            upsert=True
+        )
+
         from_pts = await get_points(from_id)
         solo = from_pts["solo"]
         group = from_pts["group"]
@@ -56,8 +62,6 @@ async def transfer_points(from_id: int, to_id: int, amount: int) -> bool:
         if total < amount:
             return False
 
-        # الخصم يصير بشرط مضمون (atomic) حتى ما يصير تكرار/استغلال
-        # لو نقاطه تغيرت بنفس اللحظة (مثلاً حول مرتين بسرعة)، العملية تفشل بدل ما تكرر
         if solo >= amount:
             result = await _collection.update_one(
                 {"user_id": from_id, "solo": {"$gte": amount}},
@@ -71,10 +75,8 @@ async def transfer_points(from_id: int, to_id: int, amount: int) -> bool:
             )
 
         if result.modified_count == 0:
-            # الخصم فشل (نقاطه تغيرت بنفس اللحظة) - لا تكمل التحويل أبداً
             return False
 
-        # الخصم نجح فعلياً، الحين نضيف للمستقبل
         await _collection.update_one(
             {"user_id": to_id},
             {"$inc": {"solo": amount}},
@@ -84,3 +86,4 @@ async def transfer_points(from_id: int, to_id: int, amount: int) -> bool:
     except Exception as e:
         print(f"⚠️ transfer_points error: {e}")
         return False
+        
