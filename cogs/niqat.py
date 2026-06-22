@@ -1,9 +1,11 @@
 import discord
 from discord.ext import commands
-from PIL import Image, ImageDraw, ImageFont, ImageOps
+from PIL import Image, ImageDraw, ImageFont
 import io
 import aiohttp
 from points import get_points, transfer_points
+
+PROFILE_BG = "profile.png"
 
 class NiqatCog(commands.Cog):
     def __init__(self, bot):
@@ -22,72 +24,48 @@ class NiqatCog(commands.Cog):
             async with session.get(str(member.display_avatar.url)) as resp:
                 avatar_data = await resp.read()
 
-        # إنشاء الصورة
-        W, H = 600, 750
-        img = Image.new("RGBA", (W, H), (100, 100, 110, 255))
+        # فتح صورة الخلفية
+        img = Image.open(PROFILE_BG).convert("RGBA")
         draw = ImageDraw.Draw(img)
+        W, H = img.size
 
         try:
-            font_big = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 45)
-            font_med = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 32)
+            font_num = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 55)
         except:
-            font_big = ImageFont.load_default()
-            font_med = font_big
+            font_num = ImageFont.load_default()
 
-        GOLD = (255, 215, 0)
-        WHITE = (255, 255, 255)
-        GREEN_DARK = (60, 90, 60)
-        SHADOW = (30, 30, 30)
+        GOLD = (255, 215, 0, 255)
+        SHADOW = (0, 0, 0, 200)
 
-        # خلفية علوية رمادية
-        draw.rectangle([0, 0, W, 300], fill=(80, 80, 90))
-
-        # صورة العضو في دائرة
+        # صورة العضو في الدائرة
         avatar_img = Image.open(io.BytesIO(avatar_data)).convert("RGBA")
-        avatar_img = avatar_img.resize((160, 160))
-        mask = Image.new("L", (160, 160), 0)
+        avatar_img = avatar_img.resize((190, 190))
+        mask = Image.new("L", (190, 190), 0)
         mask_draw = ImageDraw.Draw(mask)
-        mask_draw.ellipse([0, 0, 160, 160], fill=255)
-        avatar_circle = Image.new("RGBA", (160, 160), (0, 0, 0, 0))
+        mask_draw.ellipse([0, 0, 190, 190], fill=255)
+        avatar_circle = Image.new("RGBA", (190, 190), (0, 0, 0, 0))
         avatar_circle.paste(avatar_img, mask=mask)
 
-        # دائرة ذهبية
-        circle_bg = Image.new("RGBA", (180, 180), (0, 0, 0, 0))
-        circle_draw = ImageDraw.Draw(circle_bg)
-        circle_draw.ellipse([0, 0, 179, 179], outline=GOLD, width=5)
-        img.paste(circle_bg, (210, 50), circle_bg)
-        img.paste(avatar_circle, (220, 60), avatar_circle)
+        # حط صورة العضو في وسط الدائرة (تقريباً)
+        ax = (W - 190) // 2
+        ay = int(H * 0.08)
+        img.paste(avatar_circle, (ax, ay), avatar_circle)
 
-        # اسم العضو
-        name = member.display_name[:15]
-        bbox = draw.textbbox((0, 0), name, font=font_big)
-        nw = bbox[2] - bbox[0]
-        draw.text(((W - nw) / 2, 240), name, font=font_big, fill=GOLD)
+        # الأرقام في البطاقات
+        # البطاقة الأولى - نقاط فردية
+        y1 = int(H * 0.57)
+        # البطاقة الثانية - نقاط جماعية
+        y2 = int(H * 0.71)
+        # البطاقة الثالثة - المجموع
+        y3 = int(H * 0.85)
 
-        # رسم البطاقات
-        def draw_card(y, label, value):
-            # خلفية البطاقة
-            draw.rounded_rectangle([30, y, W-30, y+85], radius=15, fill=GREEN_DARK)
-            draw.rounded_rectangle([30, y, W-30, y+85], radius=15, outline=GOLD, width=2)
-
-            # الرقم يسار
-            num_str = str(value)
-            draw.text((60, y+22), num_str, font=font_big, fill=GOLD)
-
-            # خط فاصل
-            draw.line([(150, y+15), (150, y+70)], fill=GOLD, width=2)
-
-            # النص يمين
-            bbox = draw.textbbox((0, 0), label, font=font_med)
-            lw = bbox[2] - bbox[0]
-            draw.text((W - lw - 70, y+25), label, font=font_med, fill=WHITE)
-
-            # نجمة
-            draw.text((W-65, y+22), "⭐", font=font_med, fill=GOLD)
-
-        draw_card(320, "نقاط الالعاب الفرديه", solo)
-        draw_card(430, "نقاط الالعاب الجماعيه", group)
-        draw_card(540, "نقاط مجموع الالعاب", total)
+        for val, y in [(solo, y1), (group, y2), (total, y3)]:
+            num_str = str(val)
+            bbox = draw.textbbox((0, 0), num_str, font=font_num)
+            nw = bbox[2] - bbox[0]
+            x = int(W * 0.15)
+            draw.text((x+2, y+2), num_str, font=font_num, fill=SHADOW)
+            draw.text((x, y), num_str, font=font_num, fill=GOLD)
 
         buf = io.BytesIO()
         img.save(buf, format="PNG")
