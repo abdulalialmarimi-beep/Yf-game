@@ -35,33 +35,50 @@ class NiqatCog(commands.Cog):
         draw = ImageDraw.Draw(img)
         W, H = img.size
 
-        try:
-            font_num = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 70)
-        except:
-            font_num = ImageFont.load_default()
-
         GOLD = (255, 215, 0, 255)
         SHADOW = (0, 0, 0, 200)
 
+        # --- الصورة الشخصية (افاتار) داخل الدائرة الذهبية الكبيرة ---
+        # الدائرة الذهبية: مركزها ~50.08% عرض، ~21.6% ارتفاع، وقطرها ~32.54% من العرض
+        avatar_size = int(W * 0.3254)
+        avatar_cx = int(W * 0.5008)
+        avatar_cy = int(H * 0.2160)
+
         avatar_img = Image.open(io.BytesIO(avatar_data)).convert("RGBA")
-        avatar_img = avatar_img.resize((190, 190))
-        mask = Image.new("L", (190, 190), 0)
+        avatar_img = avatar_img.resize((avatar_size, avatar_size))
+        mask = Image.new("L", (avatar_size, avatar_size), 0)
         mask_draw = ImageDraw.Draw(mask)
-        mask_draw.ellipse([0, 0, 190, 190], fill=255)
-        avatar_circle = Image.new("RGBA", (190, 190), (0, 0, 0, 0))
+        mask_draw.ellipse([0, 0, avatar_size, avatar_size], fill=255)
+        avatar_circle = Image.new("RGBA", (avatar_size, avatar_size), (0, 0, 0, 0))
         avatar_circle.paste(avatar_img, mask=mask)
 
-        ax = (W - 190) // 2
-        ay = int(H * 0.08)
+        ax = avatar_cx - avatar_size // 2
+        ay = avatar_cy - avatar_size // 2
         img.paste(avatar_circle, (ax, ay), avatar_circle)
 
-        y1 = int(H * 0.57)
-        y2 = int(H * 0.71)
-        y3 = int(H * 0.85)
+        # --- الأرقام داخل دوائر البادجات الثلاث ---
+        # كل دائرة بادج مركزها ~14.58% عرض، وقطرها ~14.66% من العرض
+        badge_cx = int(W * 0.1458)
+        badge_diam = W * 0.1466
 
-        for val, y in [(solo, y1), (group, y2), (total, y3)]:
+        y1 = int(H * 0.5583)
+        y2 = int(H * 0.7186)
+        y3 = int(H * 0.8807)
+
+        font_size = int(badge_diam * 0.55)
+        try:
+            font_num = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", font_size)
+        except:
+            font_num = ImageFont.load_default()
+
+        for val, cy in [(solo, y1), (group, y2), (total, y3)]:
             num_str = str(val)
-            x = int(W * 0.12)
+            bbox = draw.textbbox((0, 0), num_str, font=font_num)
+            text_w = bbox[2] - bbox[0]
+            text_h = bbox[3] - bbox[1]
+            # نحسب نقطة الرسم بحيث يكون منتصف النص فعليًا على مركز الدائرة
+            x = badge_cx - text_w // 2 - bbox[0]
+            y = cy - text_h // 2 - bbox[1]
             draw.text((x+2, y+2), num_str, font=font_num, fill=SHADOW)
             draw.text((x, y), num_str, font=font_num, fill=GOLD)
 
@@ -97,4 +114,5 @@ class NiqatCog(commands.Cog):
 
 async def setup(bot):
     await bot.add_cog(NiqatCog(bot))
+
     
